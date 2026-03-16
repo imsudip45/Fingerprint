@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧬 Fingerprint
+# Fingerprint
 
 **AI Learning Companion for Kids — Powered by Gemini**
 
@@ -43,24 +43,24 @@ The system detects each child's **learning style** (Storyteller, Analogist, Visu
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Frontend (React 19 + TypeScript + Tailwind v4 + Three.js)  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐  │
-│  │ AudioOrb │ │ Content  │ │  Quiz /  │ │ Lesson Plan / │  │
-│  │   3D     │ │  Stream  │ │ Examples │ │  Summary      │  │
-│  └──────────┘ └──────────┘ └──────────┘ └───────────────┘  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐   │
+│  │ AudioOrb │ │ Content  │ │  Quiz /  │ │ Lesson Plan / │   │
+│  │   3D     │ │  Stream  │ │ Examples │ │  Summary      │   │
+│  └──────────┘ └──────────┘ └──────────┘ └───────────────┘   │
 │                        WebSocket                            │
 └────────────────────────────┬────────────────────────────────┘
                              │ Audio PCM + JSON events
 ┌────────────────────────────┴────────────────────────────────┐
 │  Backend (FastAPI + Python 3.13)                            │
-│  ┌──────────────┐  ┌────────────────┐  ┌────────────────┐  │
-│  │ Gemini Live  │  │ Backend Planner│  │ Session State  │  │
-│  │ API (voice)  │  │ + Action Exec  │  │ + Profiles     │  │
-│  └──────┬───────┘  └───────┬────────┘  └────────────────┘  │
+│  ┌──────────────┐  ┌────────────────┐  ┌────────────────┐   │
+│  │ Gemini Live  │  │ Backend Planner│  │ Session State  │   │
+│  │ API (voice)  │  │ + Action Exec  │  │ + Profiles     │   │
+│  └──────┬───────┘  └───────┬────────┘  └────────────────┘   │
 │         │                  │                                │
 │  ┌──────┴──────────────────┴─────────────────────────────┐  │
-│  │ Gemini / Vertex side calls: vision, image, quiz,     │  │
-│  │ worked examples, grounded search, lesson planning    │  │
-│  └──────────────────────────────────────────────────────┘  │
+│  │ Gemini / Vertex side calls: vision, image, quiz,      │  │
+│  │ worked examples, grounded search, lesson planning     │  │
+│  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -112,10 +112,13 @@ cd fingerprint
 
 # Set up environment
 cp backend/.env.example backend/.env
-# Edit backend/.env and add your GEMINI_API_KEY
+# Edit backend/.env and add your GEMINI_API_KEY (and any optional settings)
 
-# Build and run
-docker compose up --build
+# Build the container
+docker build -t fingerprint .
+
+# Run locally (Cloud Run-style)
+docker run --rm -p 8080:8080 --env-file env.yaml fingerprint
 
 # Open http://localhost:8080
 ```
@@ -140,20 +143,6 @@ npm run dev
 ```
 
 > **Note:** In local dev mode, the frontend connects to `ws://localhost:8000/ws/chat`. In Docker/production, it auto-detects the host.
-
----
-
-## Environment Variables
-
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `GEMINI_API_KEY` | ✅ | — | Google Gemini API key |
-| `USE_VERTEX_AI` | ❌ | `false` | Use Vertex AI for side calls (image/quiz/search) |
-| `GCP_PROJECT` | ❌ | — | GCP project ID (only if `USE_VERTEX_AI=true`) |
-| `GCP_LOCATION` | ❌ | `us-central1` | GCP region (only if `USE_VERTEX_AI=true`) |
-| `PROFILE_STORE` | ❌ | `local` | Profile backend: `local` or `firestore` |
-| `GOOGLE_CLOUD_PROJECT` | ❌ | — | Optional explicit Firestore project; falls back to `GCP_PROJECT` |
-| `PORT` | ❌ | `8080` | Server port |
 
 ---
 
@@ -187,7 +176,8 @@ fingerprint/
 │   │   │   └── ...                  # QuizCard, WorkedExample, summary, remaining shared UI
 │   └── package.json
 ├── Dockerfile               # Multi-stage build (frontend + backend, uv-managed Python env)
-├── docker-compose.yml
+├── cloudbuild.yaml          # Google Cloud Build config for Cloud Run deployment
+├── env.yaml                 # Sample environment for container/Cloud Run
 └── README.md
 ```
 
@@ -261,7 +251,3 @@ The backend stores learner profiles in a `learners` collection. Local developmen
 7. **Session ends** → profile memory is saved and a summary is shown
 
 ---
-
-## License
-
-MIT — see [LICENSE](LICENSE)
