@@ -1,0 +1,30 @@
+steps:
+  # 1. Build the Docker image using the multi-stage Dockerfile
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/fingerprint-488116/cloud-run-source-deploy/fingerprint-app:$COMMIT_SHA', '.']
+
+  # 2. Push the Docker image to Google Cloud Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/fingerprint-488116/cloud-run-source-deploy/fingerprint-app:$COMMIT_SHA']
+
+  # 3. Deploy the newly built image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'fingerprint-app'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/fingerprint-488116/cloud-run-source-deploy/fingerprint-app:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      # We use standard variables, but securely inject the API Key via a Cloud Build Substitution variable
+      - 'USE_VERTEX_AI=true,GCP_PROJECT=fingerprint-488116,GCP_LOCATION=us-central1,PROFILE_STORE=firestore,PLANNER_MODEL=gemini-3-pro,GEMINI_API_KEY=${_GEMINI_API_KEY}'
+
+images:
+  - 'us-central1-docker.pkg.dev/fingerprint-488116/cloud-run-source-deploy/fingerprint-app:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

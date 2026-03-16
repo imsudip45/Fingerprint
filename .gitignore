@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+frontend/dist/
+backend/__pycache__/
+__pycache__/
+*.py[cod]
+*.pyo
+build/
+dist/
+*.egg-info/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Docker
+profiles/
+backend/profiles/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Backup files
+*.bak
+*_backup.py
+
+# Test files (dev only)
+backend/test_*.py
+
+# Cloud deployment
+env.yaml

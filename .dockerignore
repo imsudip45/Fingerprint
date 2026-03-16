@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+profiles/
+.env
+.venv
+node_modules/
+frontend/dist/
+frontend/node_modules/
+.git
+.gitignore
+*.md
+.DS_Store
+Thumbs.db

@@ -1,0 +1,5 @@
+{
+  "name": "Fingerprint",
+  "description": "Real-time, voice-native AI tutor that detects child hesitation and dynamically pivots teaching modality.",
+  "requestFramePermissions": ["microphone"]
+}
