@@ -374,48 +374,81 @@ async def websocket_endpoint(websocket: WebSocket):
                     # more conservative heuristic that tries to extract ONLY an
                     # explicit learning request (\"learn X\", \"study X\", etc.)
                     if not topic:
+                        def _sanitize_topic(raw: str) -> str | None:
+                            txt = (raw or "").strip().strip(" .!?\"'()[]{}")
+                            if not txt:
+                                return None
+
+                            txt = re.sub(r"\s+", " ", txt).strip()
+
+                            txt = re.sub(
+                                r"^(?:about|more|on|the|a|an|this|that|some|please|pls|like)\s+",
+                                "",
+                                txt,
+                                flags=re.IGNORECASE,
+                            ).strip()
+
+                            txt_lower = txt.lower()
+                            if " and " in txt_lower and not any(
+                                k in txt_lower for k in [" and how ", " and what ", " and why ", " and when "]
+                            ):
+                                left, _, _rest = txt.partition(" and ")
+                                if left.strip():
+                                    txt = left.strip()
+                                    txt_lower = txt.lower()
+
+                            txt = re.sub(
+                                r"\s+(?:for me|for us|right now|today|please)$",
+                                "",
+                                txt,
+                                flags=re.IGNORECASE,
+                            ).strip()
+
+                            bad = {
+                                "yes",
+                                "yeah",
+                                "yep",
+                                "ok",
+                                "okay",
+                                "sure",
+                                "hello",
+                                "hi",
+                                "thanks",
+                                "thank you",
+                            }
+                            if txt_lower in bad:
+                                return None
+
+                            words = txt.split()
+                            if len(words) > 10:
+                                txt = " ".join(words[:10]).strip()
+
+                            if not any(ch.isalpha() for ch in txt):
+                                return None
+
+                            return txt[:80].title()
+
                         candidate = None
 
                         # Prefer the *last* explicit learning request in the utterance
                         patterns = [
-                            r"(?:learn(?: more)? about)\s+([^?.!]+)",
-                            r"(?:study)\s+([^?.!]+)",
-                            r"(?:teach me)\s+([^?.!]+)",
-                            r"(?:understand)\s+([^?.!]+)",
+                            r"(?:i\s+want\s+to\s+learn(?:\s+more)?(?:\s+about)?)\s+([^?.!]+)",
+                            r"(?:i\s+wanna\s+learn(?:\s+more)?(?:\s+about)?)\s+([^?.!]+)",
+                            r"(?:can\s+you\s+teach\s+me(?:\s+about)?)\s+([^?.!]+)",
+                            r"(?:teach\s+me(?:\s+about)?)\s+([^?.!]+)",
+                            r"(?:help\s+me\s+with)\s+([^?.!]+)",
+                            r"(?:explain)\s+([^?.!]+)",
+                            r"(?:learn(?:\s+more)?\s+about)\s+([^?.!]+)",
                             r"(?:learn)\s+([^?.!]+)",
+                            r"(?:study)\s+([^?.!]+)",
+                            r"(?:understand)\s+([^?.!]+)",
+                            r"(?:topic\s+is)\s+([^?.!]+)",
                         ]
                         for pat in patterns:
                             for m in re.finditer(pat, normalized):
                                 candidate = m.group(1)
                         if candidate:
-                            candidate = candidate.strip(" .!?\"'")
-                        else:
-                            # If there was no clear learning verb, don't guess from
-                            # arbitrary words – better to keep \"no topic\" than a wrong one.
-                            candidate = None
-
-                        if candidate:
-                            # Trim filler words at the start.
-                            words = [w for w in candidate.split() if w]
-                            stop_prefixes = {
-                                "about",
-                                "more",
-                                "on",
-                                "the",
-                                "a",
-                                "an",
-                                "this",
-                                "that",
-                                "some",
-                            }
-                            while words and words[0] in stop_prefixes:
-                                words.pop(0)
-
-                            # Keep the last few words as the actual subject phrase.
-                            if words:
-                                phrase = " ".join(words[-6:])
-                                if any(ch.isalpha() for ch in phrase):
-                                    topic = phrase[:80].title()
+                            topic = _sanitize_topic(candidate)
 
                     if not topic:
                         return
